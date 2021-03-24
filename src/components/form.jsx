@@ -2,6 +2,7 @@ import React, { Fragment, useState } from 'react';
 import { Button, Grid, makeStyles, Snackbar, TextField } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
 import axios from 'axios';
+const { REACT_APP_API_URL } = process.env;
 
 const useStyles = makeStyles((theme) => ({
 	uploadForm: {
@@ -32,7 +33,7 @@ export default function Form(props) {
                     "file": dataURL
                 }
                 try {
-                    axios.post('api/v1/products', data, {
+                    axios.post(REACT_APP_API_URL + 'api/v1/products', data, {
                         headers: {
                           'Authorization': `Basic ${props.userToken}` 
                         }

@@ -15,6 +15,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, Tabl
 import { useForm } from "react-hook-form";
 import { Alert, Skeleton } from "@material-ui/lab";
 import DialogContentText from '@material-ui/core/DialogContentText';
+const { REACT_APP_API_URL } = process.env;
 
 
 const useStyles = makeStyles((theme) => ({
@@ -38,7 +39,7 @@ const getProducts = async (setIsError, setIsLoading, setProducts, page, rowsPerP
     setIsError(false);
     setIsLoading(true);
     try {
-        const result = await axios.get('api/v1/products', {
+        const result = await axios.get(REACT_APP_API_URL + 'api/v1/products', {
             params: {
                 page: page,
                 limit: rowsPerPage
@@ -84,7 +85,7 @@ export default function TableData(props) {
     }
     
     const onSubmit = async (data) => {
-        await axios.put('api/v1/products/' + product.id, data, { headers: { Authorization: props.userToken }}).then((response) => {
+        await axios.put(REACT_APP_API_URL + 'api/v1/products/' + product.id, data, { headers: { Authorization: props.userToken }}).then((response) => {
             getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
             setUpdatedProduct(true);
             setOpenEdit(false);
@@ -101,7 +102,7 @@ export default function TableData(props) {
     };
 
     const deleteProduct = async (product) => {
-        await axios.delete('api/v1/products/' + product.id, { headers: { Authorization: props.userToken }}).then((response) => {
+        await axios.delete(REACT_APP_API_URL + 'api/v1/products/' + product.id, { headers: { Authorization: props.userToken }}).then((response) => {
             getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
             setDeletedProduct(true);
             setOpenDelete(false);

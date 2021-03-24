@@ -12,6 +12,7 @@ import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import Table from './table';
 import { Alert } from '@material-ui/lab';
+const { REACT_APP_API_URL } = process.env;
 
 function Copyright() {
 	return (
@@ -72,7 +73,7 @@ export default function Home() {
 
 	const onSubmit = async (data) => {
 		try {
-			await axios.post('api/v1/authentication/authenticate/', data).then((response) => {
+			await axios.post(REACT_APP_API_URL + 'api/v1/authentication/authenticate/', data).then((response) => {
 				console.log(response);
 				if (response.status === 200) {
 					setUserToken(response.data.result.auth_token);
