@@ -59,7 +59,7 @@ export default function Home() {
 	const [openDialog, setOpenDialog] = useState(false);
 	const [userToken, setUserToken] = useState(null);
 	const [login, setLogin] = useState(false);
-	const [user, setUser] = useState({});
+	const [user, setUser] = useState(null);
 	const [loginError, setLoginError] = useState(false);
 	const { register, handleSubmit } = useForm();
 
@@ -162,9 +162,9 @@ export default function Home() {
 						ruby on rails 20200810
           			</Typography>
 					<Fragment>
-						{Object.keys(user).length > 0 ? (
+						{user ? (
 							<Typography className={classes.username} variant="h6" color="inherit">
-								{user.name}
+								{user}
 							</Typography>
 						) : (
 							<Button color="inherit" onClick={() => handleOpen()}>Login</Button>
