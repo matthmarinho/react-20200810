@@ -1,13 +1,11 @@
 import React, { Fragment, useState } from 'react';
-import { Button, Grid, IconButton, makeStyles, TextField } from '@material-ui/core';
+import { Button, Grid, makeStyles, Snackbar, TextField } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
 import axios from 'axios';
-import CloseIcon from '@material-ui/icons/Close';
 
 const useStyles = makeStyles((theme) => ({
 	uploadForm: {
 		paddingTop: theme.spacing(4),
-		paddingBottom: theme.spacing(4),
 	},
     customButtom: {
         padding: "7px 16px",
@@ -31,21 +29,20 @@ export default function Form(props) {
             var dataURL = reader.result;
             if (dataURL) {
                 const data = {
-                    "params": {
-                        "file": dataURL
-                    }
+                    "file": dataURL
                 }
                 try {
-                    var result = axios.post('api/v1/products', data, {
+                    axios.post('api/v1/products', data, {
                         headers: {
                           'Authorization': `Basic ${props.userToken}` 
                         }
-                    });
-                    if (result.data) {
-                        setOpenAlert(true);
-                    } else {
-                        setIsError(true);
-                    }
+                    }).then((response) => {
+                        if (response.status === 200) {
+                            setOpenAlert(true);
+                        } else {
+                            setIsError(true);
+                        }
+                    })
                 } catch (error) {
                     setIsError(true);
                 }
@@ -60,41 +57,18 @@ export default function Form(props) {
     return (
         <Fragment>
             {openAlert &&
-                <Alert 
-                    variant="filled"
-                    action={
-                        <IconButton
-                            aria-label="close"
-                            color="inherit"
-                            size="small"
-                            onClick={() => {
-                                setOpenAlert(false);
-                            }}
-                        >
-                            <CloseIcon fontSize="inherit" />
-                        </IconButton>
-                }> 
-                    Success! Registered Products
-                </Alert>
+                <Snackbar open={openAlert} autoHideDuration={6000} onClose={() => { setOpenAlert(false)}}>
+                    <Alert onClose={() => { setOpenAlert(false) }} severity="success">
+                        Success! Registered Products
+                    </Alert>
+                </Snackbar>
             }
             {isError &&
-                <Alert 
-                    variant="filled"
-                    severity="error"
-                    action={
-                        <IconButton
-                            aria-label="close"
-                            color="inherit"
-                            size="small"
-                            onClick={() => {
-                                setIsError(false);
-                            }}
-                        >
-                            <CloseIcon fontSize="inherit" />
-                        </IconButton>
-                }>
-                    Error! Invalid Json File
-                </Alert>
+                <Snackbar open={isError} autoHideDuration={6000} onClose={() => { setIsError(false)}}>
+                    <Alert onClose={() => { setIsError(false) }} severity="error">
+                        Error! Invalid Json File
+                    </Alert>
+                </Snackbar>
             }
             {props.userToken && 
                 <div className={classes.uploadForm}>

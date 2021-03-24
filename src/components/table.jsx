@@ -11,9 +11,9 @@ import Button from "@material-ui/core/Button";
 import axios from "axios";
 import NumberFormat from 'react-number-format';
 import { DateTime } from "luxon";
-import { Dialog, DialogContent, DialogTitle, Grid, TablePagination, TextField, Toolbar, Typography } from "@material-ui/core";
+import { Dialog, DialogContent, DialogTitle, Grid, Snackbar, TablePagination, TextField, Toolbar, Typography } from "@material-ui/core";
 import { useForm } from "react-hook-form";
-import { Skeleton } from "@material-ui/lab";
+import { Alert, Skeleton } from "@material-ui/lab";
 
 const useStyles = makeStyles((theme) => ({
     table: {
@@ -32,13 +32,14 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-const getProducts = async (setIsError, setIsLoading, setProducts, userToken, page) => {
+const getProducts = async (setIsError, setIsLoading, setProducts, page, rowsPerPage) => {
     setIsError(false);
     setIsLoading(true);
     try {
         const result = await axios.get('api/v1/products', {
             params: {
-              page: page
+                page: page,
+                limit: rowsPerPage
             }
         });
         setProducts(result.data);
@@ -49,19 +50,21 @@ const getProducts = async (setIsError, setIsLoading, setProducts, userToken, pag
 };
 
 export default function TableData(props) {
-    const [products, setProducts] = useState([]);
+    const [products, setProducts] = useState({data: [], total: 0});
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
     const [deletedProduct, setDeletedProduct] = useState(false);
     const [updatedProduct, setUpdatedProduct] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
     const [product, setProduct] = useState({});
-    const [page, setPage] = React.useState(0);
+    const [selected, setSelected] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
     const { register, handleSubmit, watch, errors } = useForm();
 
     useEffect(() => {
-        getProducts(setIsError, setIsLoading, setProducts, props.userToken, page);
-    }, [deletedProduct, updatedProduct]);
+        getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
+    }, [page]);
 
     const formatDate = (date) => {
         var date = DateTime.fromISO(date).toLocaleString()
@@ -70,6 +73,7 @@ export default function TableData(props) {
 
     const deleteProduct = async (product) => {
         await axios.delete('api/v1/products/' + product.id, { headers: { Authorization: props.userToken }}).then((response) => {
+            getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
             setDeletedProduct(true);
         })
     }
@@ -84,10 +88,20 @@ export default function TableData(props) {
     }
 
     const onSubmit = async (data) => {
-        await axios.put('api/v1/products/' + product.id, { params: data }, { headers: { Authorization: props.userToken }}).then((response) => {
+        await axios.put('api/v1/products/' + product.id, data, { headers: { Authorization: props.userToken }}).then((response) => {
+            getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
             setUpdatedProduct(true);
             setOpenEdit(false);
         })
+    };
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
     };
 
     const renderDialog = () => {
@@ -146,20 +160,28 @@ export default function TableData(props) {
                 </DialogContent>
             </Dialog>
         );
-    }
-
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
     };
-    
 
     const classes = useStyles();
 
     return (
         <Fragment>
             {renderDialog()}
-
-            <div style={{ width: '100%' }}>
+            {updatedProduct &&
+                <Snackbar open={updatedProduct} autoHideDuration={6000} onClose={() => { setUpdatedProduct(false)}}>
+                    <Alert onClose={() => { setUpdatedProduct(false) }} severity="success">
+                        Success! Edited Product
+                    </Alert>
+                </Snackbar>
+            }
+            {deletedProduct &&
+                <Snackbar open={deletedProduct} autoHideDuration={6000} onClose={() => { setDeletedProduct(false)}}>
+                    <Alert onClose={() => { setDeletedProduct(false) }} severity="success">
+                        Success! Deleted Product
+                    </Alert>
+                </Snackbar>
+            }
+            <div style={{ width: '100%', paddingTop: '30px' }}>
                 {isLoading ? (
                     <div className={classes.divLoading}>
                         <Skeleton animation="wave" />
@@ -188,7 +210,7 @@ export default function TableData(props) {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {products.map(row => (
+                                    {products.data.map(row => (
                                         <TableRow key={`row_${row.id}`}>
                                             <TableCell component="th" scope="row">{row.title}</TableCell>
                                             <TableCell align="center">{row.product_type}</TableCell>
@@ -214,10 +236,12 @@ export default function TableData(props) {
                         </TableContainer>
                         <TablePagination
                             component="div"
-                            count={products.length}
-                            rowsPerPage={5}
+                            rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                            count={products.total}
+                            rowsPerPage={rowsPerPage}
                             page={page}
                             onChangePage={handleChangePage}
+                            onChangeRowsPerPage={handleChangeRowsPerPage}
                         />
                     </Paper>
                 )}  

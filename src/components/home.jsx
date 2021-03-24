@@ -7,10 +7,11 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import Link from '@material-ui/core/Link';
 import Form from './form';
-import { Button, Dialog, DialogContent, DialogTitle,  TextField } from '@material-ui/core';
+import { Button, Dialog, DialogContent, DialogTitle,  Snackbar,  TextField } from '@material-ui/core';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import Table from './table';
+import { Alert } from '@material-ui/lab';
 
 function Copyright() {
 	return (
@@ -39,13 +40,18 @@ const useStyles = makeStyles((theme) => ({
 	title: {
 		flexGrow: 1,
 	},
+	table: {
+		paddingBottom: '20px'
+	}
 }));
 
 export default function Home() {
 	const classes = useStyles();
 	const [openDialog, setOpenDialog] = useState(false);
-	const { register, handleSubmit } = useForm();
 	const [userToken, setUserToken] = useState(null);
+	const [login, setLogin] = useState(false);
+	const [loginError, setLoginError] = useState(false);
+	const { register, handleSubmit } = useForm();
 
 	const handleClose = () => {
         setOpenDialog(false);
@@ -56,12 +62,19 @@ export default function Home() {
     }
 
 	const onSubmit = async (data) => {
-        await axios.post('api/v1/authentication/authenticate/', data).then((response) => {
-			if (response.status === 200) {
-				setUserToken(response.data.auth_token);
-				setOpenDialog(false);
-			}
-        })
+		try {
+			await axios.post('api/v1/authentication/authenticate/', data).then((response) => {
+				console.log(response);
+				if (response.status === 200) {
+					setUserToken(response.data.auth_token);
+					setLogin(true);
+					setOpenDialog(false);
+				}
+			})
+		} catch {
+			setLoginError(true);
+			setOpenDialog(false);
+		}
     };
 
 	const renderDialog = () => {
@@ -113,6 +126,20 @@ export default function Home() {
 
 	return (
 		<React.Fragment>
+			{login &&
+                <Snackbar open={login} autoHideDuration={6000} onClose={() => { setLogin(false)}}>
+                    <Alert onClose={() => { setLogin(false) }} severity="success">
+						Logged In
+                    </Alert>
+                </Snackbar>
+            }
+			{loginError &&
+                <Snackbar open={loginError} autoHideDuration={6000} onClose={() => { setLoginError(false)}}>
+                    <Alert onClose={() => { setLoginError(false) }} severity="error">
+						Invalid Credentials
+                    </Alert>
+                </Snackbar>
+            }
 			{renderDialog()}
 			<CssBaseline />
 			<AppBar position="relative">
@@ -124,7 +151,7 @@ export default function Home() {
 				</Toolbar>
 			</AppBar>
 			<main>
-				<div className={classes.heroContent}>
+				<div className={classes.table}>
 					<Container maxWidth="md">
 						<Form userToken={userToken} />
 						<Table userToken={userToken} />
