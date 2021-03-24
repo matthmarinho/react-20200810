@@ -61,7 +61,7 @@ export default function TableData(props) {
 
     useEffect(() => {
         getProducts(setIsError, setIsLoading, setProducts, props.userToken, page);
-    }, []);
+    }, [deletedProduct, updatedProduct]);
 
     const formatDate = (date) => {
         var date = DateTime.fromISO(date).toLocaleString()
@@ -71,7 +71,6 @@ export default function TableData(props) {
     const deleteProduct = async (product) => {
         await axios.delete('api/v1/products/' + product.id, { headers: { Authorization: props.userToken }}).then((response) => {
             setDeletedProduct(true);
-            getProducts(setIsError, setIsLoading, setProducts);
         })
     }
 
@@ -85,9 +84,8 @@ export default function TableData(props) {
     }
 
     const onSubmit = async (data) => {
-        await axios.put('api/v1/products/' + product.id, data, { headers: { Authorization: props.userToken }}).then((response) => {
+        await axios.put('api/v1/products/' + product.id, { params: data }, { headers: { Authorization: props.userToken }}).then((response) => {
             setUpdatedProduct(true);
-            getProducts(setIsError, setIsLoading, setProducts);
             setOpenEdit(false);
         })
     };
@@ -161,7 +159,7 @@ export default function TableData(props) {
         <Fragment>
             {renderDialog()}
 
-            <div style={{ width: '100%', paddingTop: '30px' }}>
+            <div style={{ width: '100%' }}>
                 {isLoading ? (
                     <div className={classes.divLoading}>
                         <Skeleton animation="wave" />
