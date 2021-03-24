@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import AppBar from '@material-ui/core/AppBar';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -42,7 +42,15 @@ const useStyles = makeStyles((theme) => ({
 	},
 	table: {
 		paddingBottom: '20px'
-	}
+	},
+	username: {
+		textAlign: 'right',
+		flexGrow: 1,
+	}, 
+	submit: {
+		paddingTop: '20px',
+		marginBottom: '20px',
+	},
 }));
 
 export default function Home() {
@@ -50,6 +58,7 @@ export default function Home() {
 	const [openDialog, setOpenDialog] = useState(false);
 	const [userToken, setUserToken] = useState(null);
 	const [login, setLogin] = useState(false);
+	const [user, setUser] = useState({});
 	const [loginError, setLoginError] = useState(false);
 	const { register, handleSubmit } = useForm();
 
@@ -66,7 +75,8 @@ export default function Home() {
 			await axios.post('api/v1/authentication/authenticate/', data).then((response) => {
 				console.log(response);
 				if (response.status === 200) {
-					setUserToken(response.data.auth_token);
+					setUserToken(response.data.result.auth_token);
+					setUser(response.data.result.user)
 					setLogin(true);
 					setOpenDialog(false);
 				}
@@ -108,15 +118,18 @@ export default function Home() {
 								margin="normal"
 								inputRef={register({ required: true })}
 							/>
-							<Button
-								type="submit"
-								fullWidth
-								variant="contained"
-								color="primary"
-								className={classes.submit}
-							>
-								Sign In
-							</Button>
+							<div className={classes.submit}>
+								<Button
+									type="submit"
+									fullWidth
+									variant="contained"
+									color="primary"
+									
+									size="large"
+								>
+									Sign In
+								</Button>
+							</div>
 						</Container>
                     </form>
                 </DialogContent>
@@ -147,7 +160,15 @@ export default function Home() {
 					<Typography className={classes.title} variant="h6" color="inherit" noWrap>
 						ruby on rails 20200810
           			</Typography>
-					<Button color="inherit" onClick={() => handleOpen()}>Login</Button>
+					<Fragment>
+						{Object.keys(user).length > 0 ? (
+							<Typography className={classes.username} variant="h6" color="inherit">
+								{user.name}
+							</Typography>
+						) : (
+							<Button color="inherit" onClick={() => handleOpen()}>Login</Button>
+						)}
+					</Fragment>
 				</Toolbar>
 			</AppBar>
 			<main>
@@ -161,9 +182,6 @@ export default function Home() {
 			<footer className={classes.footer}>
 				<Typography variant="h6" align="center" gutterBottom>
 					ruby on rails 20200810
-        		</Typography>
-				<Typography variant="subtitle1" align="center" color="textSecondary" component="p">
-					Something here to give the footer a purpose!
         		</Typography>
 				<Copyright />
 			</footer>

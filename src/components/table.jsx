@@ -11,9 +11,11 @@ import Button from "@material-ui/core/Button";
 import axios from "axios";
 import NumberFormat from 'react-number-format';
 import { DateTime } from "luxon";
-import { Dialog, DialogContent, DialogTitle, Grid, Snackbar, TablePagination, TextField, Toolbar, Typography } from "@material-ui/core";
+import { Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, TablePagination, TextField, Toolbar, Typography } from "@material-ui/core";
 import { useForm } from "react-hook-form";
 import { Alert, Skeleton } from "@material-ui/lab";
+import DialogContentText from '@material-ui/core/DialogContentText';
+
 
 const useStyles = makeStyles((theme) => ({
     table: {
@@ -60,6 +62,7 @@ export default function TableData(props) {
     const [selected, setSelected] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [openDelete, setOpenDelete] = useState(false);
     const { register, handleSubmit, watch, errors } = useForm();
 
     useEffect(() => {
@@ -70,23 +73,16 @@ export default function TableData(props) {
         var date = DateTime.fromISO(date).toLocaleString()
         return date;
     };
-
-    const deleteProduct = async (product) => {
-        await axios.delete('api/v1/products/' + product.id, { headers: { Authorization: props.userToken }}).then((response) => {
-            getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
-            setDeletedProduct(true);
-        })
-    }
-
+    
     const handleClose = () => {
         setOpenEdit(false);
     }
-
+    
     const editProduct = (row) => {
         setProduct(row)
         setOpenEdit(true);
     }
-
+    
     const onSubmit = async (data) => {
         await axios.put('api/v1/products/' + product.id, data, { headers: { Authorization: props.userToken }}).then((response) => {
             getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
@@ -94,15 +90,58 @@ export default function TableData(props) {
             setOpenEdit(false);
         })
     };
-
+    
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
-
+    
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+
+    const deleteProduct = async (product) => {
+        await axios.delete('api/v1/products/' + product.id, { headers: { Authorization: props.userToken }}).then((response) => {
+            getProducts(setIsError, setIsLoading, setProducts, page, rowsPerPage);
+            setDeletedProduct(true);
+            setOpenDelete(false);
+        })
+    }
+
+    const handleCloseDelete = () => {
+        setOpenDelete(false);
+    };
+
+    const handleOpenDelete = (product) => {
+        setProduct(product)
+        setOpenDelete(true);
+    };
+
+    const renderConfirmDelete = () => {
+        return (
+            <Dialog
+                open={openDelete}
+                onClose={handleCloseDelete}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">Delete Product</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDelete} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={() => deleteProduct(product)} color="primary" autoFocus>
+                        Yes
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        )
+    }
 
     const renderDialog = () => {
         return (
@@ -167,6 +206,7 @@ export default function TableData(props) {
     return (
         <Fragment>
             {renderDialog()}
+            {renderConfirmDelete()}
             {updatedProduct &&
                 <Snackbar open={updatedProduct} autoHideDuration={6000} onClose={() => { setUpdatedProduct(false)}}>
                     <Alert onClose={() => { setUpdatedProduct(false) }} severity="success">
@@ -224,7 +264,7 @@ export default function TableData(props) {
                                                     <Button aria-label="edit" onClick={() => editProduct(row)}>
                                                         Edit
                                                     </Button>
-                                                    <Button aria-label="delete" onClick={() => deleteProduct(row)}>
+                                                    <Button aria-label="delete" onClick={() => handleOpenDelete(row)}>
                                                         Delete
                                                     </Button>
                                                 </TableCell>
